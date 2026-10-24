@@ -12,10 +12,6 @@ class MainMenu:
         self.options = [f"Begin act {self.curr_act_r}", "Options", "Leave"]
         self.selected_index = 0
 
-        screen = pygame.display.set_mode((1280, 720))
-        pygame.display.set_caption("The Tragical History of the Mask and the Mind")
-        clock = pygame.time.Clock()
-
     def draw(self, surface):
         surface.fill((15, 15, 25))
 

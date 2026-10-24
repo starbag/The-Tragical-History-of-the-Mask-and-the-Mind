@@ -1,7 +1,8 @@
 import pygame
 import os
 
-def draw_shadowed_text(surface, text, font, text_color, shadow_color, x_pos, y_pos, center=False):
+def draw_shadowed_text(surface, text, font, text_color,
+                       shadow_color, x_pos, y_pos, center=False):
     shadow_surface = font.render(text, True, shadow_color)
     shadow_rect = shadow_surface.get_rect()
 

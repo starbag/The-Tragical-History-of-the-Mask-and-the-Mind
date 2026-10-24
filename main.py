@@ -1,9 +1,11 @@
 import pygame
 from menu import MainMenu
+from settings import SettingsMenu
 from helpers import int_to_roman
 
 pygame.init()
 pygame.font.init()
+pygame.joystick.init()
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -14,7 +16,8 @@ pygame.display.set_caption(f"The Tragical History of the Mask and the Mind - Act
 
 clock = pygame.time.Clock()
 
-menu = MainMenu(SCREEN_WIDTH, SCREEN_HEIGHT, current_act)
+main_menu = MainMenu(SCREEN_WIDTH, SCREEN_HEIGHT, current_act)
+settings_menu = SettingsMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 current_state = "MENU"
 
@@ -24,15 +27,26 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+
         if current_state == "MENU":
-            action = menu.handle_event(event)
+            action = main_menu.handle_event(event)
             if action == "Begin act I":
                 current_state = "GAME"
+            elif action == "Options":
+                current_state = "SETTINGS"
             elif action == "Leave":
                 running = False
+        elif current_state == "SETTINGS":
+            action = settings_menu.handle_event(event)
+            if action == "Back":
+                current_state = "MENU"
 
     if current_state == "MENU":
-        menu.draw(screen)
+        main_menu.draw(screen)
+    elif current_state == "SETTINGS":
+        settings_menu.draw(screen)
+        if action == "BACK":
+            current_state = "MENU"
     elif current_state == "GAME":
         screen.fill((20, 10, 30))
         font = pygame.font.SysFont("Arial", 12)
