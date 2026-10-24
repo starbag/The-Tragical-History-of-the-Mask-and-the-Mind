@@ -1,6 +1,6 @@
 import pygame
+from enums import MenuAction
 from utils import draw_shadowed_text, load_font
-
 
 class SettingsMenu:
     def __init__(self, screen_width, screen_height):
@@ -11,7 +11,7 @@ class SettingsMenu:
         self.font = load_font('assets/fonts/Shakespeare First Folio Font.otf', 20)
         self.title_font = pygame.font.SysFont('Georgia', 24)
 
-        # Menu tabs (Added "Credits" tab)
+        # Menu tabs
         self.tabs = ["Graphics", "Sound", "Controls", "Credits", "Exit"]
         self.curr_tab = 0
 
@@ -40,69 +40,69 @@ class SettingsMenu:
         return []
 
     def _confirm_selection(self):
-        """Helper method to handle option changes and actions when confirmed."""
+        """Helper method to handle option changes and actions using MenuAction enums."""
         tab_name = self.tabs[self.curr_tab]
 
         # Exit menu
         if tab_name == "Exit":
-            return "BACK"
+            return MenuAction.BACK
 
         # Credits tab trigger
         elif tab_name == "Credits":
-            return "SHOW_CREDITS"
+            return MenuAction.SHOW_CREDITS
 
         # Graphics Options
         elif tab_name == "Graphics":
             if self.selected_option == 0:  # Full screen
                 if "disabled" in self.graphics_options[0]:
                     self.graphics_options[0] = "Full screen: enabled"
-                    return "TOGGLE_FULLSCREEN_ON"
+                    return MenuAction.TOGGLE_FULL_SCREEN_ON
                 else:
                     self.graphics_options[0] = "Full screen: disabled"
-                    return "TOGGLE_FULLSCREEN_OFF"
+                    return MenuAction.TOGGLE_FULL_SCREEN_OFF
 
             elif self.selected_option == 1:  # Resolution
                 if "800x600" in self.graphics_options[1]:
                     self.graphics_options[1] = "Resolution: 1024x768"
-                    return "RES_1024"
+                    return MenuAction.RES_1024
                 else:
                     self.graphics_options[1] = "Resolution: 800x600"
-                    return "RES_800"
+                    return MenuAction.RES_800
 
             elif self.selected_option == 2:  # V-Sync
                 if "enabled" in self.graphics_options[2]:
                     self.graphics_options[2] = "V-Sync: disabled"
-                    return "VSYNC_OFF"
+                    return MenuAction.VSYNC_OFF
                 else:
                     self.graphics_options[2] = "V-Sync: enabled"
-                    return "VSYNC_ON"
+                    return MenuAction.VSYNC_ON
 
         # Sound Options
         elif tab_name == "Sound":
             if self.selected_option == 0:  # Volume
                 if "100%" in self.sound_options[0]:
                     self.sound_options[0] = "Volume: 75%"
-                    return "VOLUME_75"
+                    return MenuAction.VOLUME_75
                 elif "75%" in self.sound_options[0]:
                     self.sound_options[0] = "Volume: 50%"
-                    return "VOLUME_50"
+                    return MenuAction.VOLUME_50
                 elif "50%" in self.sound_options[0]:
                     self.sound_options[0] = "Volume: 25%"
-                    return "VOLUME_25"
+                    return MenuAction.VOLUME_25
                 elif "25%" in self.sound_options[0]:
                     self.sound_options[0] = "Volume: 0%"
-                    return "VOLUME_0"
+                    return MenuAction.VOLUME_0
                 else:
                     self.sound_options[0] = "Volume: 100%"
-                    return "VOLUME_100"
+                    return MenuAction.VOLUME_100
 
             elif self.selected_option == 1:  # Music On / Off
                 if "on" in self.sound_options[1]:
                     self.sound_options[1] = "Music: off"
-                    return "MUSIC_OFF"
+                    return MenuAction.MUSIC_OFF
                 else:
                     self.sound_options[1] = "Music: on"
-                    return "MUSIC_ON"
+                    return MenuAction.MUSIC_ON
 
         # Control Options
         elif tab_name == "Controls":
@@ -111,19 +111,17 @@ class SettingsMenu:
                     if "not detected" in self.controls_options[1] or "Keyboard" in self.controls_options[0]:
                         self.controls_options[0] = "Control Devices: Joystick"
                         self.controls_options[1] = "Joystick: active"
-                        return "USE_JOYSTICK"
+                        return MenuAction.USE_JOYSTICK
                     else:
                         self.controls_options[0] = "Control Devices: Keyboard"
                         self.controls_options[1] = "Joystick: detected (inactive)"
-                        return "USE_KEYBOARD"
+                        return MenuAction.USE_KEYBOARD
                 else:
                     self.controls_options[1] = "Joystick: not detected"
-                    return "NO_JOYSTICK_AVAILABLE"
         return None
 
     def handle_event(self, event):
         """Handle keyboard and gamepad input for navigation and option modification."""
-
         def move_left():
             self.curr_tab = (self.curr_tab - 1) % len(self.tabs)
             self.selected_option = 0
@@ -145,7 +143,7 @@ class SettingsMenu:
         # 1. Keyboard Input Handling
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                return "BACK"
+                return MenuAction.BACK
             elif event.key == pygame.K_LEFT:
                 move_left()
             elif event.key == pygame.K_RIGHT:
@@ -174,20 +172,18 @@ class SettingsMenu:
             if event.button == 0:  # A / Cross -> Confirm
                 return self._confirm_selection()
             elif event.button == 1:  # B / Circle -> Back
-                return "BACK"
+                return MenuAction.BACK
 
         return None
 
     def draw(self, surface):
         """Render the settings menu layout onto the surface."""
-        # Background fill
         surface.fill((10, 10, 20))
 
-        # Render category tabs horizontally (adjusted spacing for 5 tabs)
+        # Render category tabs horizontally
         start_x = 50
         tab_y = 40
         for i, tab in enumerate(self.tabs):
-            # Highlight active tab
             color = (255, 255, 0) if i == self.curr_tab else (120, 120, 120)
             shadow = (20, 20, 20)
 
@@ -201,7 +197,6 @@ class SettingsMenu:
         # Render options for the currently selected tab
         current_opts = self._get_current_options()
         for i, option in enumerate(current_opts):
-            # Highlight selected option and add cursor prefix
             color = (255, 255, 0) if i == self.selected_option else (120, 120, 120)
             shadow = (20, 20, 20)
             prefix = "> " if i == self.selected_option else "  "

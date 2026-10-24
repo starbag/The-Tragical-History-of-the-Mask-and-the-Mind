@@ -1,25 +1,13 @@
-from operator import truediv
-
 import pygame
-from pygame.display import is_fullscreen
-
-from menu import MainMenu
-from settings import SettingsMenu
-from credits import CreditsMenu
+from state_manager import StateManager
 from helpers import int_to_roman
 
-# Initialize Pygame modules
+# Initialize pygame modules
 pygame.init()
 pygame.font.init()
 pygame.joystick.init()
 
-# Initial display settings and states
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-is_fullscreen = False
-active_controller = "keyboard"
-vsync_enabled = 1
-
+SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 current_act = 1
@@ -27,17 +15,14 @@ pygame.display.set_caption(f"The Tragical History of the Mask and the Mind - Act
 
 clock = pygame.time.Clock()
 
-main_menu = MainMenu(SCREEN_WIDTH, SCREEN_HEIGHT, current_act)
-settings_menu = SettingsMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
-credits_menu = CreditsMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
+# Instantiate the StateManager which controls everything
+state_manager = StateManager(screen, SCREEN_WIDTH, SCREEN_HEIGHT, current_act)
 
-# Check for attached controllers at startup
+# Optional controller check at startup
 if pygame.joystick.get_count() > 0:
     joystick = pygame.joystick.Joystick(0)
     joystick.init()
-    settings_menu.controls_options[1] = "Joystick: detected"
-
-current_state = "MENU"
+    state_manager.settings_menu.controls_options[1] = "Joystick: detected"
 
 running = True
 while running:
@@ -45,117 +30,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        else:
+            # Delegate event handling to StateManager; returns False if player quits
+            running = state_manager.handle_event(event)
 
-        # State: Main Menu
-        if current_state == "MENU":
-            action = main_menu.handle_event(event)
-            if action == f"Begin act {main_menu.curr_act_r}":
-                current_state = "GAME"
-            elif action == "Options":
-                current_state = "SETTINGS"
-            elif action == "Leave":
-                running = False
-
-        # State: Settings Menu
-        elif current_state == "SETTINGS":
-            action = settings_menu.handle_event(event)
-
-            # Returning back to main menu
-            if action == "BACK":
-                current_state = "MENU"
-
-            # Transition to credits from settings (if triggered)
-            elif action == "SHOW_CREDITS":
-                current_state = "CREDITS"
-                credits_menu.reset_scroll()
-
-            # Graphics settings
-            elif action == "TOGGLE_FULLSCREEN_ON":
-                is_fullscreen = True
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN, vsync=vsync_enabled)
-
-            elif action == "TOGGLE_FULLSCREEN_OFF":
-                is_fullscreen = False
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, vsync=vsync_enabled)
-
-            elif action == "RES_1024":
-                SCREEN_WIDTH, SCREEN_HEIGHT = 1024, 768
-                flags = pygame.FULLSCREEN if is_fullscreen else 0
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags, vsync=vsync_enabled)
-
-            elif action == "RES_800":
-                SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
-                flags = pygame.FULLSCREEN if is_fullscreen else 0
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags, vsync=vsync_enabled)
-
-            elif action == "VSYNC_ON":
-                vsync_enabled = 1
-                flags = pygame.FULLSCREEN if is_fullscreen else 0
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags, vsync=vsync_enabled)
-
-            elif action == "VSYNC_OFF":
-                vsync_enabled = 0
-                flags = pygame.FULLSCREEN if is_fullscreen else 0
-                screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags, vsync=vsync_enabled)
-
-            # Sound settings
-            elif action == "VOLUME_100":
-                pygame.mixer.music.set_volume(1.0)
-
-            elif action == "VOLUME_75":
-                pygame.mixer.music.set_volume(0.75)
-
-            elif action == "VOLUME_50":
-                pygame.mixer.music.set_volume(0.5)
-
-            elif action == "VOLUME_25":
-                pygame.mixer.music.set_volume(0.25)
-
-            elif action == "VOLUME_0":
-                pygame.mixer.music.set_volume(0)
-
-            elif action == "MUSIC_OFF":
-                pygame.mixer.music.pause()
-
-            elif action == "MUSIC_ON":
-                pygame.mixer.music.unpause()
-
-            # Controller settings
-            elif action == "USE_JOYSTICK":
-                active_controller = "joystick"
-                print("Switched to joystick")
-            elif action == "USE_KEYBOARD":
-                active_controller = "keyboard"
-                print("Switched to keyboard")
-
-        # State: Credits
-        elif current_state == "CREDITS":
-            action = credits_menu.handle_event(event)
-            if action == "BACK":
-                current_state = "SETTINGS"
-                credits_menu.reset_scroll()
-
-    # --- RENDERING & STATE UPDATES ---
-    if current_state == "MENU":
-        main_menu.draw(screen)
-
-    elif current_state == "SETTINGS":
-        settings_menu.draw(screen)
-
-    elif current_state == "CREDITS":
-        credits_menu.update()  # Updates scroll position frame by frame
-        credits_menu.draw(screen)
-
-    elif current_state == "GAME":
-        screen.fill((20, 10, 30))
-        font = pygame.font.SysFont("Arial", 12)
-        txt = font.render(f"Act {int_to_roman(current_act)} (Press ESC to return)",
-                          True, (200, 200, 200))
-        screen.blit(txt, (10, 10))
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_ESCAPE]:
-            current_state = "MENU"
+    # --- RENDERING & UPDATES ---
+    state_manager.update_and_draw()
 
     pygame.display.flip()
     clock.tick(60)
