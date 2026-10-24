@@ -5,17 +5,19 @@ from pygame.display import is_fullscreen
 
 from menu import MainMenu
 from settings import SettingsMenu
+from credits import CreditsMenu
 from helpers import int_to_roman
 
+# Initialize Pygame modules
 pygame.init()
 pygame.font.init()
 pygame.joystick.init()
 
+# Initial display settings and states
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 is_fullscreen = False
 active_controller = "keyboard"
-
 vsync_enabled = 1
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -27,7 +29,9 @@ clock = pygame.time.Clock()
 
 main_menu = MainMenu(SCREEN_WIDTH, SCREEN_HEIGHT, current_act)
 settings_menu = SettingsMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
+credits_menu = CreditsMenu(SCREEN_WIDTH, SCREEN_HEIGHT)
 
+# Check for attached controllers at startup
 if pygame.joystick.get_count() > 0:
     joystick = pygame.joystick.Joystick(0)
     joystick.init()
@@ -37,10 +41,12 @@ current_state = "MENU"
 
 running = True
 while running:
+    # --- EVENT HANDLING ---
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+        # State: Main Menu
         if current_state == "MENU":
             action = main_menu.handle_event(event)
             if action == f"Begin act {main_menu.curr_act_r}":
@@ -50,14 +56,20 @@ while running:
             elif action == "Leave":
                 running = False
 
+        # State: Settings Menu
         elif current_state == "SETTINGS":
             action = settings_menu.handle_event(event)
 
-            # returning back to menu
+            # Returning back to main menu
             if action == "BACK":
                 current_state = "MENU"
 
-            # graphics
+            # Transition to credits from settings (if triggered)
+            elif action == "SHOW_CREDITS":
+                current_state = "CREDITS"
+                credits_menu.reset_scroll()
+
+            # Graphics settings
             elif action == "TOGGLE_FULLSCREEN_ON":
                 is_fullscreen = True
                 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN, vsync=vsync_enabled)
@@ -86,7 +98,7 @@ while running:
                 flags = pygame.FULLSCREEN if is_fullscreen else 0
                 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), flags, vsync=vsync_enabled)
 
-            # sound
+            # Sound settings
             elif action == "VOLUME_100":
                 pygame.mixer.music.set_volume(1.0)
 
@@ -108,7 +120,7 @@ while running:
             elif action == "MUSIC_ON":
                 pygame.mixer.music.unpause()
 
-            # control
+            # Controller settings
             elif action == "USE_JOYSTICK":
                 active_controller = "joystick"
                 print("Switched to joystick")
@@ -116,11 +128,23 @@ while running:
                 active_controller = "keyboard"
                 print("Switched to keyboard")
 
+        # State: Credits
+        elif current_state == "CREDITS":
+            action = credits_menu.handle_event(event)
+            if action == "BACK":
+                current_state = "SETTINGS"
+                credits_menu.reset_scroll()
+
+    # --- RENDERING & STATE UPDATES ---
     if current_state == "MENU":
         main_menu.draw(screen)
 
     elif current_state == "SETTINGS":
         settings_menu.draw(screen)
+
+    elif current_state == "CREDITS":
+        credits_menu.update()  # Updates scroll position frame by frame
+        credits_menu.draw(screen)
 
     elif current_state == "GAME":
         screen.fill((20, 10, 30))
